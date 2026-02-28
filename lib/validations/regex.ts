@@ -1,4 +1,4 @@
-export const phoneRegex = /^\(\d{2}\)\s?9\d{4}-?\d{4}$/;
+export const phoneRegex = /^(?:\(\d{2}\)\s?9\d{4}-?\d{4}|\d{2}9\d{8})$/;
 
 export const emailRegex =
   /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/;

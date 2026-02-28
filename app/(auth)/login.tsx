@@ -1,33 +1,42 @@
 import { Link } from "expo-router";
-import { useState } from "react";
-import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 
 import { useAuth } from "@/components/AuthProvider";
-import type { LoginUserDTO } from "@/lib/validations/user.schema";
-
-const initialState: LoginUserDTO = {
-  email: "",
-  password: "",
-};
+import { FormInputRHF } from "@/components/FormInputRHF";
+import {
+  loginUserSchema,
+  type LoginUserDTO,
+} from "@/lib/validations/user.schema";
 
 export default function LoginScreen() {
   const { signIn, isLoading } = useAuth();
 
-  const [formData, setFormData] = useState<LoginUserDTO>(initialState);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const {
+    control,
+    handleSubmit,
+    setError,
+    trigger,
+    formState: { errors, isSubmitting },
+  } = useForm<LoginUserDTO>({
+    resolver: zodResolver(loginUserSchema),
+    mode: "onBlur",
+    reValidateMode: "onBlur",
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+  });
 
-  const onSubmit = async () => {
-    setError(null);
-    setIsSubmitting(true);
-
+  const onSubmit = async (values: LoginUserDTO) => {
     try {
-      await signIn(formData);
+      await signIn(values);
     } catch (submitError) {
       const fallbackError = "Falha ao fazer login.";
-      setError(submitError instanceof Error ? submitError.message : fallbackError);
-    } finally {
-      setIsSubmitting(false);
+      setError("root", {
+        message: submitError instanceof Error ? submitError.message : fallbackError,
+      });
     }
   };
 
@@ -37,40 +46,36 @@ export default function LoginScreen() {
     <View style={styles.container}>
       <Text style={styles.title}>Entrar</Text>
 
-      <TextInput
-        autoCapitalize="none"
-        keyboardType="email-address"
+      <FormInputRHF
+        control={control}
+        name="email"
+        trigger={trigger}
+        type="email"
         placeholder="Email"
-        placeholderTextColor="#94A3B8"
-        style={styles.input}
-        value={formData.email}
-        onChangeText={(value) =>
-          setFormData((current) => ({
-            ...current,
-            email: value,
-          }))
-        }
+        inputProps={{
+          style: styles.input,
+          placeholderTextColor: "#94A3B8",
+          autoCapitalize: "none",
+        }}
       />
 
-      <TextInput
-        secureTextEntry
+      <FormInputRHF
+        control={control}
+        name="password"
+        trigger={trigger}
+        type="password"
         placeholder="Senha"
-        placeholderTextColor="#94A3B8"
-        style={styles.input}
-        value={formData.password}
-        onChangeText={(value) =>
-          setFormData((current) => ({
-            ...current,
-            password: value,
-          }))
-        }
+        inputProps={{
+          style: styles.input,
+          placeholderTextColor: "#94A3B8",
+        }}
       />
 
-      {error ? <Text style={styles.error}>{error}</Text> : null}
+      {errors.root?.message ? <Text style={styles.error}>{errors.root.message}</Text> : null}
 
       <Pressable
         disabled={disabled}
-        onPress={onSubmit}
+        onPress={handleSubmit(onSubmit)}
         style={({ pressed }) => [
           styles.submitButton,
           (pressed || disabled) && styles.submitButtonDisabled,

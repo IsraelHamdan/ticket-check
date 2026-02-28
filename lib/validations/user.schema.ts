@@ -11,7 +11,10 @@ export const userBaseSchema = z.object({
   phone: z.string().refine((val) => phoneRegex.test(val), {
     message: errorMessages.telefone,
   }),
-  password: z.string().min(6).max(12),
+  password: z
+    .string()
+    .min(6, { message: "A senha deve ter no mínimo 6 caracacteres" })
+    .max(12, { message: "A senha deve ter no máximo 12 caracacteres" }),
 });
 
 export type CreateUserDTO = z.infer<typeof userBaseSchema>;

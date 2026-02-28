@@ -1,35 +1,44 @@
 import { Link } from "expo-router";
-import { useState } from "react";
-import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 
 import { useAuth } from "@/components/AuthProvider";
-import type { CreateUserDTO } from "@/lib/validations/user.schema";
-
-const initialState: CreateUserDTO = {
-  name: "",
-  email: "",
-  phone: "",
-  password: "",
-};
+import { FormInputRHF } from "@/components/FormInputRHF";
+import {
+  userBaseSchema,
+  type CreateUserDTO,
+} from "@/lib/validations/user.schema";
 
 export default function RegisterScreen() {
   const { signUp, isLoading } = useAuth();
 
-  const [formData, setFormData] = useState<CreateUserDTO>(initialState);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const {
+    control,
+    handleSubmit,
+    setError,
+    trigger,
+    formState: { errors, isSubmitting },
+  } = useForm<CreateUserDTO>({
+    resolver: zodResolver(userBaseSchema),
+    mode: "onBlur",
+    reValidateMode: "onBlur",
+    defaultValues: {
+      name: "",
+      email: "",
+      phone: "",
+      password: "",
+    },
+  });
 
-  const onSubmit = async () => {
-    setError(null);
-    setIsSubmitting(true);
-
+  const onSubmit = async (values: CreateUserDTO) => {
     try {
-      await signUp(formData);
+      await signUp(values);
     } catch (submitError) {
       const fallbackError = "Falha ao criar conta.";
-      setError(submitError instanceof Error ? submitError.message : fallbackError);
-    } finally {
-      setIsSubmitting(false);
+      setError("root", {
+        message: submitError instanceof Error ? submitError.message : fallbackError,
+      });
     }
   };
 
@@ -39,67 +48,60 @@ export default function RegisterScreen() {
     <View style={styles.container}>
       <Text style={styles.title}>Criar conta</Text>
 
-      <TextInput
+      <FormInputRHF
+        name="name"
+        control={control}
+        trigger={trigger}
+        type="text"
         placeholder="Nome"
-        placeholderTextColor="#94A3B8"
-        style={styles.input}
-        value={formData.name}
-        onChangeText={(value) =>
-          setFormData((current) => ({
-            ...current,
-            name: value,
-          }))
-        }
+        inputProps={{
+          style: styles.input,
+          placeholderTextColor: "#94A3B8",
+        }}
       />
 
-      <TextInput
-        autoCapitalize="none"
-        keyboardType="email-address"
+      <FormInputRHF
+        name="email"
+        control={control}
+        trigger={trigger}
+        type="email"
         placeholder="Email"
-        placeholderTextColor="#94A3B8"
-        style={styles.input}
-        value={formData.email}
-        onChangeText={(value) =>
-          setFormData((current) => ({
-            ...current,
-            email: value,
-          }))
-        }
+        inputProps={{
+          style: styles.input,
+          placeholderTextColor: "#94A3B8",
+          autoCapitalize: "none",
+        }}
       />
 
-      <TextInput
-        keyboardType="phone-pad"
+      <FormInputRHF
+        name="phone"
+        control={control}
+        trigger={trigger}
+        type="phone"
         placeholder="Telefone ex: (11)91234-5678"
-        placeholderTextColor="#94A3B8"
-        style={styles.input}
-        value={formData.phone}
-        onChangeText={(value) =>
-          setFormData((current) => ({
-            ...current,
-            phone: value,
-          }))
-        }
+        inputProps={{
+          style: styles.input,
+          placeholderTextColor: "#94A3B8",
+        }}
       />
 
-      <TextInput
-        secureTextEntry
+      <FormInputRHF
+        name="password"
+        control={control}
+        trigger={trigger}
+        type="password"
         placeholder="Senha"
-        placeholderTextColor="#94A3B8"
-        style={styles.input}
-        value={formData.password}
-        onChangeText={(value) =>
-          setFormData((current) => ({
-            ...current,
-            password: value,
-          }))
-        }
+        inputProps={{
+          style: styles.input,
+          placeholderTextColor: "#94A3B8",
+        }}
       />
 
-      {error ? <Text style={styles.error}>{error}</Text> : null}
+      {errors.root?.message ? <Text style={styles.error}>{errors.root.message}</Text> : null}
 
       <Pressable
         disabled={disabled}
-        onPress={onSubmit}
+        onPress={handleSubmit(onSubmit)}
         style={({ pressed }) => [
           styles.submitButton,
           (pressed || disabled) && styles.submitButtonDisabled,
