@@ -8,10 +8,12 @@ import {
 import { parseWithZod } from "@/lib/storage/safe-parse";
 import { STORAGE_KEYS } from "@/lib/storage/storage-keys";
 import {
+  loginUserSchema,
   userBaseSchema,
   userResponse,
   updateUserSchema,
   type CreateUserDTO,
+  type LoginUserDTO,
   type UpdateUserDTO,
 } from "@/lib/validations/user.schema";
 
@@ -19,6 +21,7 @@ const userIdSchema = z.string().trim().min(1, "User id is required");
 
 const createUserInputSchema = userBaseSchema.strict();
 const updateUserInputSchema = updateUserSchema.strict();
+const loginUserInputSchema = loginUserSchema.strict();
 
 const storedUserSchema = userBaseSchema
   .extend({
@@ -72,6 +75,11 @@ const normalizeUpdateUserInput = (input: UpdateUserDTO): UpdateUserDTO => {
   return normalizedInput;
 };
 
+const normalizeLoginUserInput = (input: LoginUserDTO): LoginUserDTO => ({
+  email: input.email.trim().toLowerCase(),
+  password: input.password.trim(),
+});
+
 const toUserEntity = (storedUser: StoredUser): UserEntity =>
   parseWithZod(
     userEntitySchema,
@@ -94,24 +102,36 @@ export const createUser = async (input: CreateUserDTO): Promise<UserEntity> => {
     "createUser input"
   );
 
-  const now = new Date().toISOString();
-  const newUser = parseWithZod(
-    storedUserSchema,
-    {
-      id: generateId("usr"),
-      ...parsedInput,
-      createdAt: now,
-      updatedAt: now,
-    },
-    "createUser payload"
-  );
+  let createdUser: StoredUser | null = null;
 
-  await persistCollection(STORAGE_KEYS.users, storedUserSchema, (users) => [
-    ...users,
-    newUser,
-  ]);
+  await persistCollection(STORAGE_KEYS.users, storedUserSchema, (users) => {
+    const alreadyExists = users.some((user) => user.email === parsedInput.email);
 
-  return toUserEntity(newUser);
+    if (alreadyExists) {
+      throw new Error("createUser failed: email already in use.");
+    }
+
+    const now = new Date().toISOString();
+    const nextUser = parseWithZod(
+      storedUserSchema,
+      {
+        id: generateId("usr"),
+        ...parsedInput,
+        createdAt: now,
+        updatedAt: now,
+      },
+      "createUser payload"
+    );
+    createdUser = nextUser;
+
+    return [...users, nextUser];
+  });
+
+  if (!createdUser) {
+    throw new Error("createUser failed: user was not created.");
+  }
+
+  return toUserEntity(createdUser);
 };
 
 export const listUsers = async (): Promise<UserEntity[]> => {
@@ -194,4 +214,27 @@ export const deleteUser = async (id: string): Promise<boolean> => {
   });
 
   return deleted;
+};
+
+export const loginUser = async (
+  input: LoginUserDTO
+): Promise<UserEntity | null> => {
+  const normalizedInput = normalizeLoginUserInput(input);
+  const parsedInput = parseWithZod(
+    loginUserInputSchema,
+    normalizedInput,
+    "loginUser input"
+  );
+  const users = await getCollection(STORAGE_KEYS.users, storedUserSchema);
+
+  const matchedUser = users.find((user) => user.email === parsedInput.email);
+  if (!matchedUser) {
+    return null;
+  }
+
+  if (matchedUser.password !== parsedInput.password) {
+    return null;
+  }
+
+  return toUserEntity(matchedUser);
 };
