@@ -46,7 +46,7 @@ export default function NewTicketScreen() {
       try {
         setIsSubmitting(true);
         await createTicket(data);
-        router.replace("/(tabs)/home/index");
+        router.replace("/(tabs)/tickets");
       } catch (error) {
         console.error("Erro ao criar ticket:", error);
       } finally {
