@@ -1,3 +1,5 @@
+import { DEADLINE_DIGITS_REGEX } from "../validations/regex";
+
 type DateLike = Date | string | number | null | undefined;
 const BR_DATE_REGEX = /^(\d{2})\/(\d{2})\/(\d{4})$/;
 const ISO_DATE_REGEX = /^(\d{4})-(\d{2})-(\d{2})$/;
@@ -181,4 +183,31 @@ export const toDateTime = (dateValue: string, timeValue: string): Date => {
 export const toOptionalStringOrNull = (value: string): string | null => {
   const trimmed = value.trim();
   return trimmed.length > 0 ? trimmed : null;
+};
+
+export const parseBRDigitsToDate = (digits: string): Date | null => {
+  if (!DEADLINE_DIGITS_REGEX.test(digits)) return null;
+
+  const day = Number(digits.slice(0, 2));
+  const month = Number(digits.slice(2, 4));
+  const year = Number(digits.slice(4, 8));
+
+  if (month < 1 || month > 12) return null;
+  if (day < 1 || day > 31) return null;
+
+  const date = new Date(year, month - 1, day);
+
+  const isCalendarValid =
+    date.getFullYear() === year &&
+    date.getMonth() === month - 1 &&
+    date.getDate() === day;
+
+  return isCalendarValid ? date : null;
+};
+
+export const formatDateShort = (date: Date): string => {
+  const dd = String(date.getDate()).padStart(2, "0");
+  const mm = String(date.getMonth() + 1).padStart(2, "0");
+  const yyyy = date.getFullYear();
+  return `${dd}/${mm}/${yyyy}`;
 };

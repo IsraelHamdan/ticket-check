@@ -10,29 +10,33 @@ import "react-native-reanimated";
 
 import { Navbar } from "@/components/navbar";
 import { ThemeProvider, useTheme } from "@/context/ThemeContext";
+import { View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import "../global.css";
 
 function AppRoot() {
   const { theme } = useTheme();
   const pathname = usePathname();
-  const showNavbar = ["/dashboard", "/newTicket", "/settings"].includes(pathname);
+  const showNavbar = ["/dashboard", "/newTicket", "/settings", "/tickets"].includes(pathname);
 
 
   return (
     <NavigationThemeProvider
       value={theme === "light" ? DarkTheme : DefaultTheme}>
       <AuthProvider>
-        <Stack>
-          <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen
-            name="modal"
-            options={{ presentation: "modal", title: "Modal" }}
-          />
-        </Stack>
-        {showNavbar && <Navbar />}
+        <SafeAreaView className={styles.safeArea(theme)} edges={["top", "bottom"]}>
+          <View className={styles.root}>
+            <Stack>
+              <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+
+            </Stack>
+            {showNavbar && <Navbar />}
+          </View>
+
+        </SafeAreaView>
       </AuthProvider>
-      <StatusBar style={theme === "dark" ? "light" : "dark"} />
+      <StatusBar translucent style={theme === "dark" ? "light" : "dark"} />
     </NavigationThemeProvider>
   );
 }
@@ -45,3 +49,9 @@ export default function RootLayout() {
     </ThemeProvider>
   );
 }
+
+const styles = {
+  root: "flex-1",
+  safeArea: (theme: string) =>
+    `flex-1 ${theme === "dark" ? "bg-zinc-900" : "bg-white"}`,
+};

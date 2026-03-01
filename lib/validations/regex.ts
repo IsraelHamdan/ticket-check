@@ -15,3 +15,5 @@ export const errorMessages = {
 };
 
 export const placaRegex = /^([a-zA-Z]{3}-\d{4}|[a-zA-Z]{3}\d[a-zA-Z0-9]\d{2})$/;
+
+export const DEADLINE_DIGITS_REGEX = /^\d{8}$/;

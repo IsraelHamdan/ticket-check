@@ -1,11 +1,11 @@
 import { usePathname, useRouter } from "expo-router";
-import { ClipboardList, House, Settings } from "lucide-react-native";
+import { Form, House, Ticket } from "lucide-react-native";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 const TABS = [
-  { href: "/dashboard", label: "Dashboard", Icon: House },
-  { href: "/newTicket", label: "Novo", Icon: ClipboardList },
-  { href: "/settings", label: "Config", Icon: Settings },
+  { href: "/dashboard", label: "Dashboard", Icon: Form },
+  { href: "/newTicket", label: "Novo", Icon: Ticket },
+  { href: "/tickets", label: "Home", Icon: House }
 ];
 
 export function Navbar() {
