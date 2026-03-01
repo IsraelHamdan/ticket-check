@@ -1,12 +1,5 @@
 import React from "react";
-import {
-  StyleSheet,
-  Text,
-  TextInput,
-  type TextInputProps,
-  type ViewStyle,
-  View,
-} from "react-native";
+import { Text, TextInput, View, type TextInputProps } from "react-native";
 import {
   Controller,
   type Control,
@@ -17,19 +10,19 @@ import {
 } from "react-hook-form";
 
 import {
-  dateMask,
-  cepMask,
-  cpfMask,
-  unMaskPrice,
-  unmaskCep,
-  unmaskCpf,
-} from "@/lib/utils/masks";
-import {
   formatCurrencyBR,
   formatDateToBR,
   formatPhoneInput,
   formatTimeOnly,
 } from "@/lib/utils/formarters";
+import {
+  cepMask,
+  cpfMask,
+  dateMask,
+  unMaskPrice,
+  unmaskCep,
+  unmaskCpf,
+} from "@/lib/utils/masks";
 
 export type InputType =
   | "text"
@@ -44,7 +37,7 @@ export type InputType =
 
 type ManagedInputProps = Omit<
   TextInputProps,
-  "value" | "onChangeText" | "onBlur" | "editable"
+  "value" | "onChangeText" | "onBlur" | "editable" | "secureTextEntry" | "keyboardType"
 >;
 
 type FormInputRHFProps<TFieldValues extends FieldValues> = {
@@ -60,9 +53,18 @@ type FormInputRHFProps<TFieldValues extends FieldValues> = {
   onValueChange?: (value: string | number) => void;
   showErrorMessage?: boolean;
   trigger?: UseFormTrigger<TFieldValues>;
-  wrapperStyle?: ViewStyle;
-  errorText?: string;
 };
+
+const styles = {
+  wrapper: "mb-4",
+  input:
+    "w-full rounded-xl border border-slate-200 bg-slate-100 px-4 py-3 text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white",
+  inputError: "border-red-500",
+  error: "mt-1 text-xs text-red-500",
+} as const;
+
+const joinClasses = (...classes: (string | false | null | undefined)[]) =>
+  classes.filter(Boolean).join(" ");
 
 const formatTimeInput = (value: string): string => {
   const digits = value.replace(/\D/g, "").slice(0, 4);
@@ -111,10 +113,7 @@ const toDisplayValue = (type: InputType, value: unknown): string => {
   }
 };
 
-const toStoredValue = (
-  type: InputType,
-  text: string
-): string | number => {
+const toStoredValue = (type: InputType, text: string): string | number => {
   switch (type) {
     case "phone":
       return text.replace(/\D/g, "").slice(0, 11);
@@ -176,8 +175,7 @@ const getErrorMessage = (error: unknown): string | null => {
 };
 
 /**
- * RHF input wrapper for React Native that keeps form state unmasked
- * while rendering a formatted value in the TextInput.
+ * RHF input wrapper that keeps form state unmasked while rendering a masked/pretty value.
  */
 export function FormInputRHF<TFieldValues extends FieldValues>({
   name,
@@ -192,8 +190,6 @@ export function FormInputRHF<TFieldValues extends FieldValues>({
   onValueChange,
   showErrorMessage = true,
   trigger,
-  wrapperStyle,
-  errorText,
 }: FormInputRHFProps<TFieldValues>) {
   return (
     <Controller
@@ -204,8 +200,12 @@ export function FormInputRHF<TFieldValues extends FieldValues>({
         const hasError = Boolean(fieldState.error);
         const shouldShowError =
           hasError && (fieldState.isTouched || formState.isSubmitted);
-        const resolvedErrorText =
-          errorText ?? getErrorMessage(fieldState.error);
+        const resolvedErrorText = getErrorMessage(fieldState.error);
+        const inputClassName = joinClasses(
+          styles.input,
+          inputProps?.className,
+          shouldShowError && styles.inputError
+        );
 
         const handleBlur = async () => {
           field.onBlur();
@@ -226,10 +226,11 @@ export function FormInputRHF<TFieldValues extends FieldValues>({
         };
 
         return (
-          <View style={[styles.wrapper, wrapperStyle]}>
+          <View className={styles.wrapper}>
             <TextInput
               {...inputProps}
               value={displayValue}
+              className={inputClassName}
               placeholder={placeholder}
               secureTextEntry={resolveSecureEntry(type, secureTextEntry)}
               keyboardType={keyboardType ?? getDefaultKeyboardType(type)}
@@ -241,7 +242,7 @@ export function FormInputRHF<TFieldValues extends FieldValues>({
             />
 
             {showErrorMessage && shouldShowError && resolvedErrorText ? (
-              <Text style={styles.errorText}>{resolvedErrorText}</Text>
+              <Text className={styles.error}>{resolvedErrorText}</Text>
             ) : null}
           </View>
         );
@@ -249,14 +250,3 @@ export function FormInputRHF<TFieldValues extends FieldValues>({
     />
   );
 }
-
-const styles = StyleSheet.create({
-  wrapper: {
-    width: "100%",
-  },
-  errorText: {
-    color: "#FCA5A5",
-    marginTop: 6,
-    marginBottom: 10,
-  },
-});
