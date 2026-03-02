@@ -1,33 +1,33 @@
 import { usePathname, useRouter } from "expo-router";
 import { Form, House, Settings, Ticket } from "lucide-react-native";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { StyleSheet, Text, TouchableOpacity, useColorScheme, View } from "react-native";
 
 const TABS = [
   { href: "/tickets", label: "Home", Icon: House },
   { href: "/newTicket", label: "Novo", Icon: Ticket },
   { href: "/dashboard", label: "Dashboard", Icon: Form },
-  { href: "/settings", label: "Config", Icon: Settings }
+  { href: "/settings", label: "Config", Icon: Settings },
 ];
 
 export function Navbar() {
   const router = useRouter();
   const pathname = usePathname();
+  const isDark = useColorScheme() === "dark";
 
   return (
-    <View style={styles.container}>
+    <View style={[navStyles.container, isDark ? navStyles.dark : navStyles.light]}>
       {TABS.map(({ href, label, Icon }) => {
-        // Verifica se esta tab está ativa comparando com a rota atual
         const isActive = pathname.startsWith(href);
-        const color = isActive ? "#2563eb" : "#71717a";
+        const color = isActive ? "#2563eb" : isDark ? "#71717a" : "#52525b";
 
         return (
           <TouchableOpacity
             key={href}
-            style={styles.tab}
+            style={navStyles.tab}
             onPress={() => router.push(href as any)}
           >
             <Icon size={22} color={color} />
-            <Text style={[styles.label, { color }]}>{label}</Text>
+            <Text style={[navStyles.label, { color }]}>{label}</Text>
           </TouchableOpacity>
         );
       })}
@@ -35,24 +35,16 @@ export function Navbar() {
   );
 }
 
-const styles = StyleSheet.create({
+const navStyles = StyleSheet.create({
   container: {
     flexDirection: "row",
     height: 70,
-    backgroundColor: "white", // ou use uma variável de tema
     borderTopWidth: 1,
-    borderTopColor: "#e4e4e7",
     paddingBottom: 8,
     paddingTop: 8,
   },
-  tab: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 4,
-  },
-  label: {
-    fontSize: 12,
-    fontWeight: "500",
-  },
+  light: { backgroundColor: "#ffffff", borderTopColor: "#e4e4e7" },
+  dark: { backgroundColor: "#0f172a", borderTopColor: "#1e293b" },
+  tab: { flex: 1, alignItems: "center", justifyContent: "center", gap: 4 },
+  label: { fontSize: 12, fontWeight: "500" },
 });

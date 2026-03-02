@@ -8,7 +8,6 @@ import {
 import { parseWithZod } from "@/lib/storage/safe-parse";
 import { STORAGE_KEYS } from "@/lib/storage/storage-keys";
 import {
-  CLOSED_STATUS,
   TICKET_STATUS,
   createTicketSchema,
   storedTicketSchema,
