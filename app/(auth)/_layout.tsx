@@ -1,21 +1,45 @@
-import { Stack } from "expo-router";
-import { View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-
 import { ThemeToggleButton } from "@/components/ThemeToggleButton";
-import { formStyles } from "@/styles/formStyle";
+import { Stack } from "expo-router";
+import { KeyboardAvoidingView, Platform, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function AuthLayout() {
   return (
-    <SafeAreaView className={formStyles.layoutContainer}>
-      <View className="absolute right-6 top-4 z-10">
-        <ThemeToggleButton />
-      </View>
+    <SafeAreaView className="flex-1 bg-white dark:bg-slate-900">
 
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="login" />
-        <Stack.Screen name="register" />
-      </Stack>
+      <KeyboardAvoidingView
+        className="flex-1"
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+      >
+
+        <View className="flex-1 px-6 justify-center">
+
+          {/* Botão tema */}
+          <View className="absolute right-0 top-0">
+            <ThemeToggleButton />
+          </View>
+
+          {/* Título */}
+          <View className="mb-10 items-center">
+            <Text className="text-5xl font-extrabold tracking-tight">
+              <Text className="text-slate-900 dark:text-white">
+                Ticket{" "}
+              </Text>
+              <Text className="text-indigo-600 dark:text-indigo-400">
+                Check
+              </Text>
+            </Text>
+          </View>
+
+          {/* Stack */}
+          <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="login" />
+            <Stack.Screen name="register" />
+          </Stack>
+
+        </View>
+
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }

@@ -51,7 +51,14 @@ export default function SettingsScreen() {
 
   return (
     <View className={styles.container}>
-
+      <View className="flex-1 items-center justify-center px-6">
+        <Text className="text-5xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+          Ticket
+          <Text className="text-indigo-600 dark:text-indigo-400">
+            {" "}Check
+          </Text>
+        </Text>
+      </View>
       {/* User info card */}
       <View className={styles.section}>
         <Text className={styles.sectionTitle}>Perfil</Text>
