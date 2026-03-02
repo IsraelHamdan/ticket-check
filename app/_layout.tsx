@@ -17,7 +17,7 @@ import "../global.css";
 function AppRoot() {
   const { theme } = useTheme();
   const pathname = usePathname();
-  const showNavbar = ["/dashboard", "/newTicket", "/settings", "/tickets"].includes(pathname);
+  const showNavbar = ["/dashboard", "/newTicket", "/settings", "/tickets", "/tickets/[id]"].includes(pathname);
 
 
   return (

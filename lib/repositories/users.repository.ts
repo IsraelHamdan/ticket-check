@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from "zod/v4";
 
 import {
   generateId,
@@ -8,39 +8,27 @@ import {
 import { parseWithZod } from "@/lib/storage/safe-parse";
 import { STORAGE_KEYS } from "@/lib/storage/storage-keys";
 import {
+  createUserSchema,
   loginUserSchema,
-  userBaseSchema,
-  userResponse,
   updateUserSchema,
+  userBaseSchema,
+  userEntitySchema,
   type CreateUserDTO,
   type LoginUserDTO,
   type UpdateUserDTO,
+  type UserEntity,
 } from "@/lib/validations/user.schema";
 
 const userIdSchema = z.string().trim().min(1, "User id is required");
 
-const createUserInputSchema = userBaseSchema.strict();
-const updateUserInputSchema = updateUserSchema.strict();
-const loginUserInputSchema = loginUserSchema.strict();
-
 const storedUserSchema = userBaseSchema
   .extend({
-    id: z.string().min(1),
-    createdAt: z.string().datetime(),
-    updatedAt: z.string().datetime(),
-  })
-  .strict();
-
-const userEntitySchema = userResponse
-  .extend({
-    id: z.string().min(1),
-    createdAt: z.date(),
-    updatedAt: z.date(),
+    createdAt: z.coerce.date(),
+    updatedAt: z.coerce.date(),
   })
   .strict();
 
 type StoredUser = z.infer<typeof storedUserSchema>;
-export type UserEntity = z.infer<typeof userEntitySchema>;
 
 const normalizeText = (value: string): string =>
   value.trim().replace(/\s+/g, " ");
@@ -54,25 +42,13 @@ const normalizeCreateUserInput = (input: CreateUserDTO): CreateUserDTO => ({
 });
 
 const normalizeUpdateUserInput = (input: UpdateUserDTO): UpdateUserDTO => {
-  const normalizedInput: UpdateUserDTO = {};
-
-  if (typeof input.name === "string") {
-    normalizedInput.name = normalizeText(input.name);
-  }
-
-  if (typeof input.email === "string") {
-    normalizedInput.email = input.email.trim().toLowerCase();
-  }
-
-  if (typeof input.phone === "string") {
-    normalizedInput.phone = input.phone.trim();
-  }
-
-  if (typeof input.password === "string") {
-    normalizedInput.password = input.password.trim();
-  }
-
-  return normalizedInput;
+  const out: UpdateUserDTO = {};
+  if (typeof input.name === "string") out.name = normalizeText(input.name);
+  if (typeof input.email === "string")
+    out.email = input.email.trim().toLowerCase();
+  if (typeof input.phone === "string") out.phone = input.phone.trim();
+  if (typeof input.password === "string") out.password = input.password.trim();
+  return out;
 };
 
 const normalizeLoginUserInput = (input: LoginUserDTO): LoginUserDTO => ({
@@ -80,34 +56,30 @@ const normalizeLoginUserInput = (input: LoginUserDTO): LoginUserDTO => ({
   password: input.password.trim(),
 });
 
-const toUserEntity = (storedUser: StoredUser): UserEntity =>
+const toUserEntity = (stored: StoredUser): UserEntity =>
   parseWithZod(
     userEntitySchema,
     {
-      id: storedUser.id,
-      name: storedUser.name,
-      email: storedUser.email,
-      phone: storedUser.phone,
-      createdAt: new Date(storedUser.createdAt),
-      updatedAt: new Date(storedUser.updatedAt),
+      id: stored.id,
+      name: stored.name,
+      email: stored.email,
+      phone: stored.phone,
+      createdAt: new Date(stored.createdAt),
+      updatedAt: new Date(stored.updatedAt),
     },
-    "stored user entity"
+    "toUserEntity",
   );
 
+// ── Operações ─────────────────────────────────────────────────────────────────
+
 export const createUser = async (input: CreateUserDTO): Promise<UserEntity> => {
-  const normalizedInput = normalizeCreateUserInput(input);
-  const parsedInput = parseWithZod(
-    createUserInputSchema,
-    normalizedInput,
-    "createUser input"
-  );
+  const normalized = normalizeCreateUserInput(input);
+  const parsed = parseWithZod(createUserSchema, normalized, "createUser input");
 
   let createdUser: StoredUser | null = null;
 
   await persistCollection(STORAGE_KEYS.users, storedUserSchema, (users) => {
-    const alreadyExists = users.some((user) => user.email === parsedInput.email);
-
-    if (alreadyExists) {
+    if (users.some((u) => u.email === parsed.email)) {
       throw new Error("createUser failed: email already in use.");
     }
 
@@ -116,21 +88,18 @@ export const createUser = async (input: CreateUserDTO): Promise<UserEntity> => {
       storedUserSchema,
       {
         id: generateId("usr"),
-        ...parsedInput,
+        ...parsed,
         createdAt: now,
         updatedAt: now,
       },
-      "createUser payload"
+      "createUser payload",
     );
-    createdUser = nextUser;
 
+    createdUser = nextUser;
     return [...users, nextUser];
   });
 
-  if (!createdUser) {
-    throw new Error("createUser failed: user was not created.");
-  }
-
+  if (!createdUser) throw new Error("createUser failed: user was not created.");
   return toUserEntity(createdUser);
 };
 
@@ -142,64 +111,43 @@ export const listUsers = async (): Promise<UserEntity[]> => {
 export const getUserById = async (id: string): Promise<UserEntity | null> => {
   const parsedId = parseWithZod(userIdSchema, id, "getUserById id");
   const users = await getCollection(STORAGE_KEYS.users, storedUserSchema);
-
-  const targetUser = users.find((user) => user.id === parsedId);
-  return targetUser ? toUserEntity(targetUser) : null;
+  const found = users.find((u) => u.id === parsedId);
+  return found ? toUserEntity(found) : null;
 };
 
 export const updateUser = async (
   id: string,
-  input: UpdateUserDTO
+  input: UpdateUserDTO,
 ): Promise<UserEntity | null> => {
   const parsedId = parseWithZod(userIdSchema, id, "updateUser id");
-  const normalizedInput = normalizeUpdateUserInput(input);
-  const parsedInput = parseWithZod(
-    updateUserInputSchema,
-    normalizedInput,
-    "updateUser input"
-  );
-  const hasUpdates = Object.keys(parsedInput).length > 0;
+  const normalized = normalizeUpdateUserInput(input);
+  const parsed = parseWithZod(updateUserSchema, normalized, "updateUser input");
+  const hasUpdates = Object.keys(parsed).length > 0;
 
   let updatedUser: StoredUser | null = null;
   let existingUser: StoredUser | null = null;
 
   await persistCollection(STORAGE_KEYS.users, storedUserSchema, (users) => {
-    const userIndex = users.findIndex((user) => user.id === parsedId);
-    if (userIndex < 0) {
-      return users;
-    }
+    const idx = users.findIndex((u) => u.id === parsedId);
+    if (idx < 0) return users;
 
-    existingUser = users[userIndex];
+    existingUser = users[idx];
+    if (!hasUpdates) return users;
 
-    if (!hasUpdates) {
-      return users;
-    }
-
-    const mergedUser = parseWithZod(
+    const merged = parseWithZod(
       storedUserSchema,
-      {
-        ...users[userIndex],
-        ...parsedInput,
-        updatedAt: new Date().toISOString(),
-      },
-      "updateUser payload"
+      { ...users[idx], ...parsed, updatedAt: new Date().toISOString() },
+      "updateUser payload",
     );
 
-    const nextUsers = [...users];
-    nextUsers[userIndex] = mergedUser;
-    updatedUser = mergedUser;
-
-    return nextUsers;
+    const next = [...users];
+    next[idx] = merged;
+    updatedUser = merged;
+    return next;
   });
 
-  if (updatedUser) {
-    return toUserEntity(updatedUser);
-  }
-
-  if (existingUser) {
-    return toUserEntity(existingUser);
-  }
-
+  if (updatedUser) return toUserEntity(updatedUser);
+  if (existingUser) return toUserEntity(existingUser);
   return null;
 };
 
@@ -208,33 +156,23 @@ export const deleteUser = async (id: string): Promise<boolean> => {
   let deleted = false;
 
   await persistCollection(STORAGE_KEYS.users, storedUserSchema, (users) => {
-    const nextUsers = users.filter((user) => user.id !== parsedId);
-    deleted = nextUsers.length !== users.length;
-    return deleted ? nextUsers : users;
+    const next = users.filter((u) => u.id !== parsedId);
+    deleted = next.length !== users.length;
+    return deleted ? next : users;
   });
 
   return deleted;
 };
 
 export const loginUser = async (
-  input: LoginUserDTO
+  input: LoginUserDTO,
 ): Promise<UserEntity | null> => {
-  const normalizedInput = normalizeLoginUserInput(input);
-  const parsedInput = parseWithZod(
-    loginUserInputSchema,
-    normalizedInput,
-    "loginUser input"
-  );
+  const normalized = normalizeLoginUserInput(input);
+  const parsed = parseWithZod(loginUserSchema, normalized, "loginUser input");
   const users = await getCollection(STORAGE_KEYS.users, storedUserSchema);
 
-  const matchedUser = users.find((user) => user.email === parsedInput.email);
-  if (!matchedUser) {
-    return null;
-  }
+  const matched = users.find((u) => u.email === parsed.email);
+  if (!matched || matched.password !== parsed.password) return null;
 
-  if (matchedUser.password !== parsedInput.password) {
-    return null;
-  }
-
-  return toUserEntity(matchedUser);
+  return toUserEntity(matched);
 };

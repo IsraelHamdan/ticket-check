@@ -17,6 +17,8 @@ export const CLOSED_STATUSES = [
   "IMPROCEDENTE",
 ] as const satisfies TicketStatus[];
 
+export type ClosedTicketStatus = (typeof CLOSED_STATUSES)[number];
+
 export const ticketStatusLabel: Record<TicketStatus, string> = {
   ABERTO: "Aberto",
   ACEITO: "Aceito",
@@ -29,18 +31,18 @@ export const ticketBaseSchema = z.object({
   title: z.string().trim().min(3, "Título deve ter no mínimo 3 caracteres"),
   details: z.string().trim().min(1, "Detalhes são obrigatórios"),
   requester: z.string().trim().min(1, "Solicitante é obrigatório"),
+  requesterId: z.string().trim().min(1, "requesterId é obrigatório"),
   deadline: z.iso.datetime({ message: "Prazo inválido" }),
 });
 
 export const createTicketSchema = ticketBaseSchema;
-
 export type CreateTicketDTO = z.infer<typeof createTicketSchema>;
 
 export const newTicketFormSchema = z.object({
   title: z.string().trim().min(3, "Título deve ter no mínimo 3 caracteres"),
   details: z.string().trim().min(1, "Detalhes são obrigatórios"),
   requester: z.string().trim().min(1, "Solicitante é obrigatório"),
-
+  requesterId: z.string().trim().min(1, "requesterId é obrigatório"),
   deadline: z
     .string()
     .refine(
@@ -64,16 +66,9 @@ export const updateTicketSchema = z
     deadline: z.iso.datetime().optional(),
     status: TICKET_STATUS.optional(),
     provider: z.string().trim().min(1).optional(),
-    /**
-     * Descrição obrigatória ao mover para ENCERRADO, CANCELADO ou IMPROCEDENTE.
-     * Fica registrada para auditoria.
-     */
+    providerId: z.string().trim().min(1).optional(),
     closingDetails: z.string().trim().min(1).optional(),
   })
-  /**
-   * Refinamento: se o status for de encerramento, exige closingDetails e provider.
-   * Assim a regra de negócio fica declarada no schema, não espalhada na UI.
-   */
   .refine(
     (data) => {
       const isClosing =
@@ -84,7 +79,9 @@ export const updateTicketSchema = z
           typeof data.closingDetails === "string" &&
           data.closingDetails.length > 0 &&
           typeof data.provider === "string" &&
-          data.provider.length > 0
+          data.provider.length > 0 &&
+          typeof data.providerId === "string" &&
+          data.providerId.length > 0
         );
       }
       return true;
@@ -103,19 +100,13 @@ export const storedTicketSchema = z.object({
   title: z.string().min(1),
   details: z.string(),
   requester: z.string().min(1),
+  requesterId: z.string().min(1).optional(),
   deadline: z.iso.datetime(),
-
   status: TICKET_STATUS,
-
-  /** Responsável pelo atendimento — ausente em tickets recém-abertos. */
   provider: z.string().trim().min(1).optional(),
-
+  providerId: z.string().trim().min(1).optional(),
   closingDetails: z.string().optional(),
-
-  /** ISO 8601 — imutável após criação. */
   createdAt: z.iso.datetime(),
-
-  /** ISO 8601 — atualizado a cada mutação. */
   updatedAt: z.iso.datetime(),
 });
 

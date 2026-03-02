@@ -1,7 +1,8 @@
-import { z } from "zod";
+import { z } from "zod/v4";
 import { emailRegex, errorMessages, phoneRegex } from "./regex";
 
 export const userBaseSchema = z.object({
+  id: z.string().min(1),
   name: z
     .string()
     .min(3, { message: "O nome de usuário deve ter no mínimo 3 caracteres" }),
@@ -17,9 +18,10 @@ export const userBaseSchema = z.object({
     .max(12, { message: "A senha deve ter no máximo 12 caracacteres" }),
 });
 
-export type CreateUserDTO = z.infer<typeof userBaseSchema>;
+export const createUserSchema = userBaseSchema.omit({ id: true });
+export type CreateUserDTO = z.infer<typeof createUserSchema>;
 
-export const updateUserSchema = userBaseSchema.partial();
+export const updateUserSchema = createUserSchema.partial();
 export type UpdateUserDTO = z.infer<typeof updateUserSchema>;
 
 export const loginUserSchema = z.object({
@@ -31,8 +33,12 @@ export const loginUserSchema = z.object({
 
 export type LoginUserDTO = z.infer<typeof loginUserSchema>;
 
-export const userResponse = userBaseSchema.omit({
-  password: true,
+export const userEntitySchema = userBaseSchema.omit({ password: true }).extend({
+  createdAt: z.date(),
+  updatedAt: z.date(),
 });
+export type UserEntity = z.infer<typeof userEntitySchema>;
 
-export type UserResponseDTO = z.infer<typeof userResponse>;
+// Mantido para compatibilidade, aponta para userEntitySchema
+export const userResponse = userEntitySchema;
+export type UserResponseDTO = UserEntity;

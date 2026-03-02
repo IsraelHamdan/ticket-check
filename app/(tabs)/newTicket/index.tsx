@@ -31,15 +31,15 @@ export default function NewTicketScreen() {
         title: "",
         details: "",
         requester: "",
+        requesterId: "",
         deadline: "",
       },
     });
 
   useEffect(() => {
-    if (user?.name) {
-      setValue("requester", user.name, { shouldValidate: false });
-    }
-  }, [user?.name, setValue]);
+    if (user?.name) setValue("requester", user.name, { shouldValidate: false });
+    if (user?.id) setValue("requesterId", user.id, { shouldValidate: false });
+  }, [user?.name, user?.id, setValue]);
 
   const onSubmit = useCallback(
     async (data: NewTicketFormOutput) => {
@@ -53,7 +53,7 @@ export default function NewTicketScreen() {
         setIsSubmitting(false);
       }
     },
-    [router]
+    [router],
   );
 
   return (
@@ -150,14 +150,12 @@ const styles = {
   scroll: "flex-1 bg-slate-100 dark:bg-slate-950",
   scrollContent: "px-5 pt-6 pb-14",
   header: "mb-8",
-  headerTitle:
-    "text-3xl font-bold tracking-tight text-slate-900 dark:text-white",
+  headerTitle: "text-3xl font-bold tracking-tight text-slate-900 dark:text-white",
   headerSubtitle: "mt-1.5 text-base text-slate-500 dark:text-slate-400",
   form: "bg-white dark:bg-slate-900 rounded-2xl px-4 pt-5 pb-2 mb-6 shadow-sm shadow-black/5 dark:shadow-black/30",
   fieldWrapper: "mb-1",
   fieldWrapperLast: "mb-1",
-  fieldLabel:
-    "mb-1.5 text-sm font-semibold text-slate-700 dark:text-slate-200",
+  fieldLabel: "mb-1.5 text-sm font-semibold text-slate-700 dark:text-slate-200",
   fieldRequired: "text-red-500",
   detailsInput:
     "min-h-[108px] w-full rounded-xl border border-slate-200 bg-slate-100 px-4 py-3 text-base text-slate-900 dark:border-slate-600 dark:bg-slate-800 dark:text-white",

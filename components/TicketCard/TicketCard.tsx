@@ -19,7 +19,7 @@ export function TicketCard({ ticket }: TicketCardProps) {
 
   const handlePress = () => {
     router.push({
-      pathname: `/(tabs)/tickets/${ticket.id}`,
+      pathname: "/(tabs)/tickets/[id]",
       params: { id: ticket.id },
     });
   };

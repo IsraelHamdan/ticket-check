@@ -1,3 +1,4 @@
+/* eslint-disable react/no-unescaped-entities */
 import { Feather } from "@expo/vector-icons";
 import { useFocusEffect } from "expo-router";
 import React, { useCallback, useState } from "react";
@@ -11,26 +12,9 @@ import {
 
 import { TicketCard } from "@/components/TicketCard/TicketCard";
 import { listTickets } from "@/lib/repositories/tickets.repository";
+import { ScreenState } from "@/lib/types/pageTypes";
 import type { TicketEntity } from "@/lib/validations/ticket.schema";
-
-const styles = {
-  container: "flex-1 bg-slate-50 dark:bg-slate-900",
-  centered: "flex-1 items-center justify-center bg-slate-50 dark:bg-slate-900",
-  loadingText: "mt-3 text-sm text-slate-400 dark:text-slate-500",
-  listContent: "px-4 pt-4 pb-10 gap-3",
-  emptyWrapper: "flex-1 items-center justify-center px-8 gap-3",
-  emptyIcon: "mb-1 opacity-30",
-  emptyTitle: "text-base font-semibold text-slate-500 dark:text-slate-400 text-center",
-  emptySubtitle: "text-sm text-slate-400 dark:text-slate-500 text-center leading-relaxed",
-  errorWrapper: "flex-1 items-center justify-center px-8 gap-3",
-  errorTitle: "text-base font-semibold text-red-500 text-center",
-  errorSubtitle: "text-sm text-slate-400 dark:text-slate-500 text-center",
-} as const;
-
-type ScreenState =
-  | { status: "loading"; }
-  | { status: "error"; message: string; }
-  | { status: "success"; data: TicketEntity[]; };
+import { ticketStyles } from "@/styles/ticketStyles";
 
 const keyExtractor = (item: TicketEntity): string => item.id;
 
@@ -39,11 +23,11 @@ const renderItem: ListRenderItem<TicketEntity> = ({ item }) => (
 );
 
 const EmptyList = () => (
-  <View className={styles.emptyWrapper}>
+  <View className={ticketStyles.emptyWrapper}>
     <Feather name="inbox" size={48} color="#94a3b8" />
-    <Text className={styles.emptyTitle}>Nenhum chamado encontrado</Text>
-    <Text className={styles.emptySubtitle}>
-      Abra um novo chamado pela aba "Novo" para ele aparecer aqui.
+    <Text className={ticketStyles.emptyTitle}>Nenhum chamado encontrado</Text>
+    <Text className={ticketStyles.emptySubtitle}>
+      Abra um novo chamado pela aba 'Novo&lsquo; para ele aparecer aqui.
     </Text>
   </View>
 );
@@ -71,29 +55,29 @@ export default function HomePage() {
 
   if (state.status === "loading") {
     return (
-      <View className={styles.centered}>
+      <View className={ticketStyles.centered}>
         <ActivityIndicator size="large" color="#3b82f6" />
-        <Text className={styles.loadingText}>Carregando chamados...</Text>
+        <Text className={ticketStyles.loadingText}>Carregando chamados...</Text>
       </View>
     );
   }
 
   if (state.status === "error") {
     return (
-      <View className={styles.errorWrapper}>
+      <View className={ticketStyles.errorWrapper}>
         <Feather name="alert-circle" size={40} color="#ef4444" />
-        <Text className={styles.errorTitle}>Falha ao carregar</Text>
-        <Text className={styles.errorSubtitle}>{state.message}</Text>
+        <Text className={ticketStyles.errorTitle}>Falha ao carregar</Text>
+        <Text className={ticketStyles.errorSubtitle}>{state.message}</Text>
       </View>
     );
   }
-
+  const tickets = Array.isArray(state.data) ? state.data : [state.data];
   return (
     <FlatList
-      className={styles.container}
-      contentContainerClassName={styles.listContent}
-      contentContainerStyle={state.data.length === 0 ? { flex: 1 } : undefined}
-      data={state.data}
+      className={ticketStyles.container}
+      contentContainerClassName={ticketStyles.listContent}
+      contentContainerStyle={tickets.length === 0 ? { flex: 1 } : undefined}
+      data={tickets}
       keyExtractor={keyExtractor}
       renderItem={renderItem}
       ListEmptyComponent={EmptyList}

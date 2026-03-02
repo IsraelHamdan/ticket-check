@@ -8,7 +8,7 @@ import {
 import { parseWithZod } from "@/lib/storage/safe-parse";
 import { STORAGE_KEYS } from "@/lib/storage/storage-keys";
 import {
-  CLOSED_STATUSES,
+  CLOSED_STATUS,
   TICKET_STATUS,
   createTicketSchema,
   storedTicketSchema,
@@ -22,6 +22,7 @@ import {
 } from "@/lib/validations/ticket.schema";
 
 const ticketIdSchema = z.string().trim().min(1, "Ticket id é obrigatório");
+const userIdSchema = z.string().trim().min(1, "User id é obrigatório");
 
 const normalizeText = (value: string): string =>
   value.trim().replace(/\s+/g, " ");
@@ -33,33 +34,28 @@ const normalizeCreateInput = (input: CreateTicketDTO): CreateTicketDTO => ({
   title: normalizeText(input.title),
   details: input.details.trim(),
   requester: normalizeText(input.requester),
+  requesterId: input.requesterId.trim(),
   deadline: input.deadline,
 });
 
 const normalizeUpdateInput = (input: UpdateTicketDTO): UpdateTicketDTO => {
   const normalized: UpdateTicketDTO = {};
 
-  if (typeof input.title === "string") {
+  if (typeof input.title === "string")
     normalized.title = normalizeText(input.title);
-  }
-  if (typeof input.details === "string") {
+  if (typeof input.details === "string")
     normalized.details = input.details.trim();
-  }
-  if (typeof input.requester === "string") {
+  if (typeof input.requester === "string")
     normalized.requester = normalizeText(input.requester);
-  }
-  if (typeof input.status === "string") {
+  if (typeof input.status === "string")
     normalized.status = normalizeTicketStatus(input.status);
-  }
-  if (typeof input.provider === "string") {
+  if (typeof input.provider === "string")
     normalized.provider = normalizeText(input.provider);
-  }
-  if (typeof input.closingDetails === "string") {
+  if (typeof input.providerId === "string")
+    normalized.providerId = input.providerId.trim();
+  if (typeof input.closingDetails === "string")
     normalized.closingDetails = input.closingDetails.trim();
-  }
-  if (typeof input.deadline === "string") {
-    normalized.deadline = input.deadline;
-  }
+  if (typeof input.deadline === "string") normalized.deadline = input.deadline;
 
   return normalized;
 };
@@ -76,7 +72,6 @@ const toTicketEntity = (stored: StoredTicket): TicketEntity =>
     "toTicketEntity",
   );
 
-/** Cria um novo ticket com status inicial ABERTO. */
 export const createTicket = async (
   input: CreateTicketDTO,
 ): Promise<TicketEntity> => {
@@ -96,6 +91,7 @@ export const createTicket = async (
       title: parsed.title,
       details: parsed.details,
       requester: parsed.requester,
+      requesterId: parsed.requesterId,
       deadline: parsed.deadline,
       status: "ABERTO" satisfies TicketStatus,
       createdAt: now,
@@ -115,7 +111,6 @@ export const createTicket = async (
 
 export const listTickets = async (): Promise<TicketEntity[]> => {
   const tickets = await getCollection(STORAGE_KEYS.tickets, storedTicketSchema);
-
   return tickets
     .map(toTicketEntity)
     .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
@@ -129,7 +124,6 @@ export const listTicketsByStatus = async (
     status,
     "listTicketsByStatus status",
   );
-
   const all = await listTickets();
   return all.filter((ticket) => ticket.status === parsedStatus);
 };
@@ -139,7 +133,6 @@ export const getTicketById = async (
 ): Promise<TicketEntity | null> => {
   const parsedId = parseWithZod(ticketIdSchema, id, "getTicketById id");
   const tickets = await getCollection(STORAGE_KEYS.tickets, storedTicketSchema);
-
   const found = tickets.find((ticket) => ticket.id === parsedId);
   return found ? toTicketEntity(found) : null;
 };
@@ -147,8 +140,14 @@ export const getTicketById = async (
 export const updateTicket = async (
   id: string,
   input: UpdateTicketDTO,
+  userId: string, // providerId
 ): Promise<TicketEntity | null> => {
   const parsedId = parseWithZod(ticketIdSchema, id, "updateTicket id");
+  const parsedUserId = parseWithZod(
+    userIdSchema,
+    userId,
+    "updateTicket userId",
+  );
   const normalized = normalizeUpdateInput(input);
   const parsed = parseWithZod(
     updateTicketSchema,
@@ -166,19 +165,26 @@ export const updateTicket = async (
     (tickets) => {
       const index = tickets.findIndex((t) => t.id === parsedId);
 
-      if (index < 0) {
-        return tickets;
+      if (index < 0) return tickets;
+
+      const ticket = tickets[index];
+
+      // ✅ Regra de negócio: quem criou não pode atualizar
+      if (ticket.requesterId === parsedUserId) {
+        throw new Error(
+          "Operação não permitida: o solicitante do chamado não pode ser o responsável por resolvê-lo.",
+        );
       }
 
       if (!hasUpdates) {
-        resultTicket = tickets[index];
+        resultTicket = ticket;
         return tickets;
       }
 
       const merged = parseWithZod(
         storedTicketSchema,
         {
-          ...tickets[index],
+          ...ticket,
           ...parsed,
           updatedAt: new Date().toISOString(),
         },
@@ -214,24 +220,12 @@ export const deleteTicket = async (id: string): Promise<boolean> => {
 };
 
 export type TicketStatusDistribution = Record<TicketStatus, number>;
-/** Métricas agregadas exibidas no dashboard. */
 export interface TicketMetrics {
   totalCount: number;
   byStatus: TicketStatusDistribution;
-  /**
-   * Média de tempo (em minutos) entre abertura e encerramento,
-   * calculada apenas sobre os tickets com status de encerramento
-   * (ENCERRADO, CANCELADO, IMPROCEDENTE).
-   * Retorna null quando não há tickets encerrados.
-   */
   avgClosingTimeMinutes: number | null;
 }
 
-/**
- * Calcula e retorna as métricas agregadas de todos os tickets.
- * Lê uma única vez o storage para montar todas as métricas,
- * evitando múltiplas viagens ao AsyncStorage.
- */
 export const getTicketMetrics = async (): Promise<TicketMetrics> => {
   const tickets = await getCollection(STORAGE_KEYS.tickets, storedTicketSchema);
   const entities = tickets.map(toTicketEntity);
@@ -250,10 +244,9 @@ export const getTicketMetrics = async (): Promise<TicketMetrics> => {
   for (const ticket of entities) {
     byStatus[ticket.status] += 1;
 
-    const isClosed = (CLOSED_STATUSES as readonly string[]).includes(
+    const isClosed = (CLOSED_STATUS as readonly string[]).includes(
       ticket.status,
     );
-
     if (isClosed) {
       const diffMs = ticket.updatedAt.getTime() - ticket.createdAt.getTime();
       totalClosingMinutes += diffMs / 1_000 / 60;

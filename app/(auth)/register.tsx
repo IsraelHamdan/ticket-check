@@ -1,15 +1,15 @@
-import { Link } from "expo-router";
-import { Pressable, Text, View } from "react-native";
-import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Link } from "expo-router";
+import { useForm } from "react-hook-form";
+import { Pressable, Text, View } from "react-native";
 
 import { useAuth } from "@/components/AuthProvider";
 import { FormInputRHF } from "@/components/FormInputRHF";
-import { formStyles } from "@/styles/formStyle";
 import {
-  userBaseSchema,
-  type CreateUserDTO,
+  createUserSchema,
+  type CreateUserDTO
 } from "@/lib/validations/user.schema";
+import { formStyles } from "@/styles/formStyle";
 
 export default function RegisterScreen() {
   const { signUp, isLoading } = useAuth();
@@ -21,7 +21,7 @@ export default function RegisterScreen() {
     trigger,
     formState: { errors, isSubmitting },
   } = useForm<CreateUserDTO>({
-    resolver: zodResolver(userBaseSchema),
+    resolver: zodResolver(createUserSchema),
     mode: "onBlur",
     reValidateMode: "onBlur",
     defaultValues: {
