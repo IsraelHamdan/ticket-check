@@ -8,7 +8,9 @@ import {
 import { parseWithZod } from "@/lib/storage/safe-parse";
 import { STORAGE_KEYS } from "@/lib/storage/storage-keys";
 import {
+  CLOSED_STATUSES,
   TICKET_STATUS,
+  TicketsGroupedByStatus,
   createTicketSchema,
   storedTicketSchema,
   ticketEntitySchema,
@@ -225,6 +227,7 @@ export interface TicketMetrics {
   avgClosingTimeMinutes: number | null;
 }
 
+// Para as métricas
 export const getTicketMetrics = async (): Promise<TicketMetrics> => {
   const tickets = await getCollection(STORAGE_KEYS.tickets, storedTicketSchema);
   const entities = tickets.map(toTicketEntity);
@@ -243,7 +246,7 @@ export const getTicketMetrics = async (): Promise<TicketMetrics> => {
   for (const ticket of entities) {
     byStatus[ticket.status] += 1;
 
-    const isClosed = (CLOSED_STATUS as readonly string[]).includes(
+    const isClosed = (CLOSED_STATUSES as readonly string[]).includes(
       ticket.status,
     );
     if (isClosed) {
@@ -260,3 +263,22 @@ export const getTicketMetrics = async (): Promise<TicketMetrics> => {
       closedCount > 0 ? Math.round(totalClosingMinutes / closedCount) : null,
   };
 };
+
+export const listTicketsGroupedByStatus =
+  async (): Promise<TicketsGroupedByStatus> => {
+    const all = await listTickets();
+
+    const grouped: TicketsGroupedByStatus = {
+      ABERTO: [],
+      ACEITO: [],
+      ENCERRADO: [],
+      CANCELADO: [],
+      IMPROCEDENTE: [],
+    };
+
+    for (const ticket of all) {
+      grouped[ticket.status].push(ticket);
+    }
+
+    return grouped;
+  };

@@ -6,6 +6,7 @@ import { ActivityIndicator, FlatList, Text, useColorScheme, View, type ListRende
 import { TicketCard } from "@/components/TicketCard/TicketCard";
 import { listTickets } from "@/lib/repositories/tickets.repository";
 import { ScreenState } from "@/lib/types/pageTypes";
+import { isTicketList } from "@/lib/utils/ticketGuard";
 import type { TicketEntity } from "@/lib/validations/ticket.schema";
 import { ticketStyles } from "@/styles/ticketStyles";
 
@@ -77,8 +78,7 @@ export default function HomePage() {
     );
   }
 
-  const tickets = Array.isArray(state.data) ? state.data : [state.data];
-
+  const tickets = isTicketList(state.data) ? state.data : [];
   return (
     <FlatList
       className={theme.list}

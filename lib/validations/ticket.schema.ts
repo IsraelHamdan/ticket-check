@@ -1,4 +1,5 @@
 import { z } from "zod/v4";
+import { TicketStatusDistribution } from "../repositories";
 import { parseBRDigitsToDate } from "../utils/formarters";
 
 export const TICKET_STATUS = z.enum([
@@ -119,3 +120,17 @@ export const ticketEntitySchema = storedTicketSchema.extend({
 });
 
 export type TicketEntity = z.infer<typeof ticketEntitySchema>;
+
+export type TicketsGroupedByStatus = {
+  ABERTO: TicketEntity[];
+  ACEITO: TicketEntity[];
+  ENCERRADO: TicketEntity[];
+  CANCELADO: TicketEntity[];
+  IMPROCEDENTE: TicketEntity[];
+};
+
+export type TicketMetrics = {
+  totalCount: number;
+  byStatus: TicketStatusDistribution;
+  avgClosingTimeMinutes: number | null; // null quando não há tickets fechados
+};
