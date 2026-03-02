@@ -1,4 +1,4 @@
-# 🚀 NOME_DO_APP
+# 🚀 Ticket Check
 
 Aplicação mobile desenvolvida com foco em gerenciamento de tickets em um ambiente corporativo simulado.  
 O objetivo principal foi entregar uma solução funcional priorizando valor de negócio e experiência do usuário, seguindo a proposta de um MVP.
@@ -256,23 +256,82 @@ type UpdateTicketDTO = {
 
 ---
 
-## 📱 Imagens da Aplicação
+## 📱 Galeria da Aplicação
 
-Para adicionar imagens no README, utilize o padrão:
+<table>
+<tr>
+<td align="center">
+  <img src="https://github.com/user-attachments/assets/a47bc295-5d62-4eaa-b2dd-162426fecf7d" width="250"/><br/>
+  <strong>Tela de Login</strong>
+</td>
 
-```md
-![Tela de Login](./assets/login.png)
-![Lista de Tickets](./assets/tickets.png)
-![Detalhes do Ticket](./assets/details.png)
-```
+<td align="center">
+  <img src="https://github.com/user-attachments/assets/719a0b67-fb00-451e-ab73-4a8093147b57" width="250"/><br/>
+  <strong>Login (Dark)</strong>
+</td>
+</tr>
 
-Se as imagens estiverem na raiz:
+<tr>
+<td align="center">
+  <img src="https://github.com/user-attachments/assets/ba375848-b55a-4e51-a9bf-e4144519cd33" width="250"/><br/>
+  <strong>Tela de Cadastro</strong>
+</td>
 
-```md
-![Home](./home.png)
-```
+<td align="center">
+  <img src="https://github.com/user-attachments/assets/29b63621-3c66-468b-be6a-a6b15286ef0f" width="250"/><br/>
+  <strong>Cadastro (Dark)</strong>
+</td>
+</tr>
 
----
+<tr>
+<td align="center">
+  <img src="https://github.com/user-attachments/assets/e0b63e6a-411e-4c51-9c59-85c8b5ae6a44" width="250"/><br/>
+  <strong>Tela Inicial</strong>
+</td>
+
+<td align="center">
+  <img src="https://github.com/user-attachments/assets/1cee5c66-10c1-443a-af77-638bcd2413de" width="250"/><br/>
+  <strong>Inicial (Dark)</strong>
+</td>
+</tr>
+
+<tr>
+<td align="center">
+  <img src="https://github.com/user-attachments/assets/ef10a88b-fd69-4149-b9fb-0f79cc432490" width="250"/><br/>
+  <strong>Criação de Ticket</strong>
+</td>
+
+<td align="center">
+  <img src="https://github.com/user-attachments/assets/45b50a32-69f1-415a-a5d5-0fef55d0dfb3" width="250"/><br/>
+  <strong>Criação (Dark)</strong>
+</td>
+</tr>
+
+<tr>
+<td align="center">
+  <img src="https://github.com/user-attachments/assets/c17a550f-2ef9-42d4-bc95-0f337a56b78e" width="250"/><br/>
+  <strong>Detalhes do Ticket</strong>
+</td>
+
+<td align="center">
+  <img src="https://github.com/user-attachments/assets/bbcc91e0-5b18-4211-8ad3-0a37efeeb282" width="250"/><br/>
+  <strong>Detalhes (Dark)</strong>
+</td>
+</tr>
+
+<tr>
+<td align="center">
+  <img src="https://github.com/user-attachments/assets/a8d56eeb-0271-4b0f-8e5c-1d210e32318f" width="250"/><br/>
+  <strong>Dashboard</strong>
+</td>
+
+<td align="center">
+  <img src="https://github.com/user-attachments/assets/c391cf7a-cfd8-4995-b876-2ec39a4515e6" width="250"/><br/>
+  <strong>Configurações</strong>
+</td>
+</tr>
+
+</table>
 
 ## 🚀 Possíveis Evoluções Futuras
 
@@ -283,6 +342,7 @@ Se as imagens estiverem na raiz:
 - Paginação de tickets
 - Filtros por status
 - Push notifications
+- Integração com login social (Google, Microsoft...) para ambientes corporativos
 
 ---
 
