@@ -1,50 +1,292 @@
-# Welcome to your Expo app 👋
+# 🚀 NOME_DO_APP
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Aplicação mobile desenvolvida com foco em gerenciamento de tickets em um ambiente corporativo simulado.  
+O objetivo principal foi entregar uma solução funcional priorizando valor de negócio e experiência do usuário, seguindo a proposta de um MVP.
 
-## Get started
+---
 
-1. Install dependencies
+## 🛠️ Tecnologias Utilizadas
 
-   ```bash
-   npm install
-   ```
+- **React Native**
+- **Expo**
+- **TypeScript**
+- **NativeWind**
 
-2. Start the app
+---
 
-   ```bash
-   npx expo start
-   ```
+## 🎯 Decisões Técnicas
 
-In the output, you'll find options to open the app in a
+### 1. Uso de AsyncStorage
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+Foi utilizado **AsyncStorage** como mecanismo de persistência local, pois o desafio permitia armazenamento local e não exigia backend externo.  
+Essa decisão simplificou a arquitetura e reduziu complexidade de infraestrutura.
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+### 2. Não criação de API externa
 
-## Get a fresh project
+Optou-se por **não criar uma API externa**, centralizando toda a lógica no próprio app.  
+Isso reduziu tempo de desenvolvimento e manteve o escopo alinhado à proposta do desafio.
 
-When you're ready, run:
+### 3. Priorização de valor (MVP)
+
+O foco foi tornar o aplicativo o mais funcional possível dentro do prazo, priorizando:
+
+- Fluxo completo de autenticação
+- Criação e visualização de tickets
+- Regras de negócio aplicadas corretamente
+- Persistência de dados
+
+A arquitetura foi pensada para permitir evolução futura (como substituição do AsyncStorage por API real).
+
+---
+
+## 📁 Estrutura de Pastas
 
 ```bash
-npm run reset-project
+└── 📁ticket-check
+    └── 📁.expo
+        └── 📁types
+            ├── router.d.ts
+        ├── devices.json
+        ├── README.md
+    └── 📁.vscode
+        └── 📁.react
+        ├── extensions.json
+        ├── settings.json
+    └── 📁app
+        └── 📁(auth)
+            ├── _layout.tsx
+            ├── login.tsx
+            ├── register.tsx
+        └── 📁(tabs)
+            └── 📁dashboard
+                ├── index.tsx
+            └── 📁newTicket
+                ├── index.tsx
+            └── 📁settings
+                ├── index.tsx
+            └── 📁tickets
+                ├── [id].tsx
+                ├── index.tsx
+            ├── _layout.tsx
+            ├── index.tsx
+        ├── _layout.tsx
+    └── 📁assets
+        └── 📁images
+            ├── android-icon-background.png
+            ├── android-icon-foreground.png
+            ├── android-icon-monochrome.png
+            ├── favicon.png
+            ├── icon.png
+            ├── partial-react-logo.png
+            ├── react-logo.png
+            ├── react-logo@2x.png
+            ├── react-logo@3x.png
+            ├── splash-icon.png
+    └── 📁components
+        └── 📁metricsCharts
+            ├── metricCards.tsx
+            ├── metrricCharts.tsx
+        └── 📁statusPieChart
+            ├── StatusPieChart.tsx
+        └── 📁TicketCard
+            ├── styles.ts
+            ├── TicketCard.tsx
+        └── 📁ticketCarrossel
+            ├── paginationDot.tsx
+            ├── styles.ts
+            ├── ticketCardCarrossel.tsx
+        └── 📁ui
+            ├── icon-symbol.ios.tsx
+            ├── icon-symbol.tsx
+        ├── AuthProvider.tsx
+        ├── divider.tsx
+        ├── external-link.tsx
+        ├── FormInputRHF.tsx
+        ├── haptic-tab.tsx
+        ├── hello-wave.tsx
+        ├── infoRow.tsx
+        ├── navbar.tsx
+        ├── ThemeToggleButton.tsx
+        ├── ticketsCarrossel.tsx
+    └── 📁constants
+        ├── theme.ts
+    └── 📁context
+        ├── ThemeContext.tsx
+    └── 📁hooks
+    └── 📁lib
+        └── 📁repositories
+            ├── index.ts
+            ├── tickets.repository.ts
+            ├── users.repository.ts
+        └── 📁storage
+            ├── async-storage.ts
+            ├── auth-session.ts
+            ├── index.ts
+            ├── safe-parse.ts
+            ├── storage-keys.ts
+        └── 📁types
+            ├── fatherName.ts
+            ├── pageTypes.ts
+        └── 📁utils
+            ├── formarters.ts
+            ├── masks.ts
+            ├── ticket.utils.ts
+            ├── ticketGuard.ts
+        └── 📁validations
+            ├── regex.ts
+            ├── ticket.schema.ts
+            ├── user.schema.ts
+    └── 📁scripts
+        ├── reset-project.js
+    └── 📁styles
+        ├── formStyle.ts
+        ├── TicketCardStyles.ts
+        ├── TicketStatusConfig.ts
+        ├── ticketStyles.ts
+    ├── .gitignore
+    ├── app.json
+    ├── babel.config.js
+    ├── eslint.config.js
+    ├── expo-env.d.ts
+    ├── global.css
+    ├── metro.config.js
+    ├── nativewind-env.d.ts
+    ├── package-lock.json
+    ├── package.json
+    ├── README.md
+    ├── tailwind.config.js
+    └── tsconfig.json
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+---
 
-## Learn more
+## 📌 Regras de Negócio
 
-To learn more about developing your project with Expo, look at the following resources:
+### 🔐 Autenticação
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+- Usuários precisam estar autenticados para utilizar o sistema.
+- Não é possível interagir com tickets sem login.
 
-## Join the community
+---
 
-Join our community of developers creating universal apps.
+### 👤 Contrato de Usuário
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+```ts
+type User = {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  password: string;
+};
+```
+
+#### Retorno do Usuário
+
+Por motivos de segurança:
+
+- O campo `password` é ocultado ao retornar o usuário.
+- São adicionados os campos:
+  - `createdAt: Date`
+  - `updatedAt: Date`
+
+---
+
+### 🎟️ Regras sobre Tickets
+
+#### 1. Criação
+
+Qualquer usuário autenticado pode criar um ticket.
+
+Contrato necessário:
+
+```ts
+type CreateTicketDTO = {
+  title: string; // título do ticket
+  details: string; // detalhes do problema
+  requester: string; // nome de quem solicitou
+  requesterId: string; // id do solicitante (relacionamento)
+  deadline: string; // prazo para solução
+};
+```
+
+- Todo ticket nasce com status `"ABERTO"`.
+
+---
+
+#### 2. Visualização
+
+- Todos os usuários podem visualizar tickets criados por outros usuários.
+- Tickets são públicos dentro do sistema.
+
+---
+
+#### 3. Resolução
+
+Um ticket **não pode ser resolvido pelo mesmo usuário que o criou**.
+
+Motivação:
+
+Simular um ambiente empresarial real.  
+Exemplo: se um colaborador do RH estiver com vírus no computador, ele não conseguirá resolver o próprio problema — será necessário o suporte técnico.
+
+Contrato para atualização:
+
+```ts
+type UpdateTicketDTO = {
+  title?: string;
+  details?: string;
+  requester?: string;
+  deadline?: string;
+  status?: "ABERTO" | "ACEITO" | "ENCERRADO" | "CANCELADO" | "IMPROCEDENTE";
+  provider?: string;
+  providerId?: string;
+  closingDetails?: string;
+};
+```
+
+---
+
+## 📊 Fluxo do Sistema
+
+1. Usuário realiza login
+2. Usuário cria ticket (status inicial: ABERTO)
+3. Outro usuário pode aceitar e resolver o ticket
+4. Ticket pode evoluir entre os status definidos
+
+---
+
+## 📱 Imagens da Aplicação
+
+Para adicionar imagens no README, utilize o padrão:
+
+```md
+![Tela de Login](./assets/login.png)
+![Lista de Tickets](./assets/tickets.png)
+![Detalhes do Ticket](./assets/details.png)
+```
+
+Se as imagens estiverem na raiz:
+
+```md
+![Home](./home.png)
+```
+
+---
+
+## 🚀 Possíveis Evoluções Futuras
+
+- Integração com API REST real
+- Autenticação com JWT
+- Persistência em banco de dados
+- Controle de permissões por perfil
+- Paginação de tickets
+- Filtros por status
+- Push notifications
+
+---
+
+## 🧠 Considerações Finais
+
+O projeto foi estruturado como um MVP funcional, com regras de negócio claras e arquitetura preparada para evolução futura.  
+As decisões técnicas priorizaram simplicidade, organização e entrega de valor dentro do escopo proposto.
