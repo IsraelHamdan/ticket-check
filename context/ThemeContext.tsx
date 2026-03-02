@@ -1,124 +1,58 @@
+// context/ThemeContext.tsx
+
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type ReactNode,
-} from "react";
-import { useColorScheme } from "nativewind";
+import { useColorScheme as useNativeWindColorScheme } from "nativewind";
+import React, { createContext, useContext, useEffect, useState } from "react";
 
-export type ThemeMode = "light" | "dark";
+type Theme = "light" | "dark";
 
-type ThemeContextValue = {
-  theme: ThemeMode;
-  isThemeLoaded: boolean;
-  setTheme: (theme: ThemeMode) => void;
+type ThemeContextType = {
+  theme: Theme;
   toggleTheme: () => void;
+  setTheme: (theme: Theme) => void;
 };
 
-const STORAGE_THEME_KEY = "@ticket-check/theme";
+const ThemeContext = createContext<ThemeContextType | null>(null);
 
-const ThemeContext = createContext<ThemeContextValue | null>(null);
+const STORAGE_KEY = "@app_theme";
 
-const normalizeTheme = (value: string | null | undefined): ThemeMode =>
-  value === "dark" ? "dark" : "light";
+export function ThemeProvider({ children }: { children: React.ReactNode; }) {
+  const { setColorScheme } = useNativeWindColorScheme();
+  const [theme, setThemeState] = useState<Theme>("light");
 
-const parseStoredTheme = (value: string | null): ThemeMode | null => {
-  if (value === "light" || value === "dark") {
-    return value;
-  }
-
-  return null;
-};
-
-type ThemeProviderProps = {
-  children: ReactNode;
-};
-
-export function ThemeProvider({ children }: ThemeProviderProps) {
-  const { colorScheme, setColorScheme } = useColorScheme();
-  const initialThemeRef = useRef<ThemeMode>(normalizeTheme(colorScheme));
-
-  const [theme, setThemeState] = useState<ThemeMode>("light");
-  const [isThemeLoaded, setIsThemeLoaded] = useState(false);
-
+  // Carrega tema salvo
   useEffect(() => {
-    let isMounted = true;
-
-    const restoreTheme = async () => {
-      try {
-        const storedTheme = parseStoredTheme(
-          await AsyncStorage.getItem(STORAGE_THEME_KEY)
-        );
-
-        const resolvedTheme = storedTheme ?? initialThemeRef.current;
-
-        if (!isMounted) {
-          return;
-        }
-
-        setThemeState(resolvedTheme);
-        setColorScheme(resolvedTheme);
-      } finally {
-        if (isMounted) {
-          setIsThemeLoaded(true);
-        }
+    (async () => {
+      const savedTheme = await AsyncStorage.getItem(STORAGE_KEY);
+      if (savedTheme === "dark" || savedTheme === "light") {
+        setThemeState(savedTheme);
+        setColorScheme(savedTheme);
       }
-    };
-
-    void restoreTheme();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [setColorScheme]);
-
-  useEffect(() => {
-    if (!isThemeLoaded) {
-      return;
-    }
-
-    setColorScheme(theme);
-    void AsyncStorage.setItem(STORAGE_THEME_KEY, theme);
-  }, [isThemeLoaded, setColorScheme, theme]);
-
-  const setTheme = useCallback((nextTheme: ThemeMode) => {
-    setThemeState(nextTheme);
+    })();
   }, []);
 
-  const toggleTheme = useCallback(() => {
-    setThemeState((currentTheme) =>
-      currentTheme === "light" ? "dark" : "light"
-    );
-  }, []);
+  const setTheme = async (newTheme: Theme) => {
+    setThemeState(newTheme);
+    setColorScheme(newTheme);
+    await AsyncStorage.setItem(STORAGE_KEY, newTheme);
+  };
 
-  const value = useMemo<ThemeContextValue>(
-    () => ({
-      theme,
-      isThemeLoaded,
-      setTheme,
-      toggleTheme,
-    }),
-    [isThemeLoaded, setTheme, theme, toggleTheme]
+  const toggleTheme = () => {
+    const newTheme = theme === "light" ? "dark" : "light";
+    setTheme(newTheme);
+  };
+
+  return (
+    <ThemeContext.Provider value={{ theme, toggleTheme, setTheme }}>
+      {children}
+    </ThemeContext.Provider>
   );
-
-  if (!isThemeLoaded) {
-    return null;
-  }
-
-  return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 }
 
-export function useTheme(): ThemeContextValue {
+export function useTheme() {
   const context = useContext(ThemeContext);
-
   if (!context) {
-    throw new Error("useTheme must be used within ThemeProvider.");
+    throw new Error("useTheme must be used within ThemeProvider");
   }
-
   return context;
 }
